@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
+import vue from "@vitejs/plugin-vue"; //add this line
 import HelloWorld from './components/HelloWorld.vue'
 </script>
 
