@@ -1,0 +1,106 @@
+services:
+  php:
+    container_name: php-server
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    tty: true
+    environment:
+      PHP_IDE_CONFIG: "serverName=laraserver"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./sales-manager-app:/var/www/html
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+      - ./docker/php/xdebug/xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+      - ./docker/php/xdebug/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
+    networks:
+      - php-server-network
+  nginx:
+    container_name: server-nginx
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    tty: true
+    ports:
+      - '8080:80'
+      - '443:443'
+    volumes:
+      - ./sales-manager-app:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - php-server-network
+
+  mysql:
+    container_name: server-mysql
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    tty: true
+    volumes:
+      - php-server-data:/var/lib/mysql/
+      - ./docker/mysql/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - php-server-network
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_DATABASE: sales-base
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: admin_01
+      MYSQL_PASSWORD: P@ssw0rd
+
+  phpmyadmin:
+    container_name: server-phpmyadmin
+    image: phpmyadmin:5.2
+    restart: always
+    ports:
+      - '8888:80'
+    networks:
+      - php-server-network
+    environment:
+      PMA_HOST: server-mysql
+    depends_on:
+      - mysql
+
+  redis:
+    image: redis:alpine
+    container_name: server-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-server-data:/data
+    command: redis-server --appendonly yes
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1GB
+    networks:
+      - php-server-network
+
+  vue:
+    container_name: vue-app
+    build:
+      context: ./sales-manager-front
+      dockerfile: ../docker/vue/Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./sales-manager-front:/app
+    networks:
+      - php-server-network
+    command: ["npm", "run", "dev", "--", "--host"]
+
+networks:
+  php-server-network:
+    driver: bridge
+
+volumes:
+  php-server-data:
+    driver: local
+  redis-server-data:
+    driver: local
