@@ -19,7 +19,7 @@ class SaleFactory extends Factory
     {
         return [
             'description' => fake()->text(100),
-            'value' => fake()->randomFloat(),
+            'value' => fake()->randomFloat(2, 0, 99999.99),
             'sale_date' => fake()->dateTime(),
             'seller_id' => Seller::factory()
         ];

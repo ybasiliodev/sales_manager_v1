@@ -12,6 +12,8 @@ class Sale extends Model
     /** @use HasFactory<\Database\Factories\SaleFactory> */
     use HasFactory;
 
+    protected $table = "sale";
+
     protected $fillable = [
         'description',
         'value',
@@ -28,7 +30,12 @@ class Sale extends Model
                 'required',
                 Rule::date()->beforeToday(),
             ],
-            'seller_id' => 'required|integer'
+            'seller_id' => [
+                'required',
+                'integer',
+                Rule::exists('sellers', 'id')
+            ]
+    
         ];
     }
 
@@ -38,7 +45,8 @@ class Sale extends Model
             'description.required' => 'A descrição da venda é obrigatória',
             'value.required' => 'O valor da venda é obrigatório',
             'sale_date.required' => 'A data da venda é obrigatória',
-            'seller_id.required' => 'É necessário informar o vendedor'
+            'seller_id.required' => 'É necessário informar o vendedor',
+            'seller_id.exists' => 'O vendedor informado não foi encontrado.'
         ];
     }
 
