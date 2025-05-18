@@ -17,6 +17,7 @@ services:
       - ./docker/php/xdebug/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
     networks:
       - php-server-network
+
   nginx:
     container_name: server-nginx
     build:
@@ -91,6 +92,7 @@ services:
       - "5173:5173"
     volumes:
       - ./sales-manager-front:/app
+      - /app/node_modules
     networks:
       - php-server-network
     command: ["npm", "run", "dev", "--", "--host"]
